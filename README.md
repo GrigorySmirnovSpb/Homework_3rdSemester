@@ -7,11 +7,6 @@ This is an application for analyzing a movie database, which looks like more fil
 ### Install .NET:
 [.NET](https://dotnet.microsoft.com/en-us/download)
 
-These packages are also needed for this project:
-- Microsoft.Data.Sqlite
-- EntityFrameWorkCore.Sqlite
-- EntityFrameWorkCore.Tools
-
 ## How to run:
 ```bash
    git clone https://github.com/GrigorySmirnovSpb/Homework_3rdSemester
