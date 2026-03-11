@@ -405,6 +405,7 @@ public class DataProcessor
     public static Dictionary<string, string> tagNames;
     public static Dictionary<string, List<string>> movieTags;
     public static int batchSize = 1000; // Уменьшили для тестирования
+    public static string currentPath = Directory.GetCurrentDirectory();
     
     // Временные структуры для парсинга
     public class MovieData
@@ -696,13 +697,12 @@ public class DataProcessor
     // ============================================
     // МЕТОДЫ ПАРСИНГА ФАЙЛОВ (упрощенные)
     // ============================================
-    
     public static Task<Dictionary<string, string>> LoadMovieTitlesAsync()
     {
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/Homework_3rdSemester/ml-latest/MovieCodes_IMDB.txt";
+            string filePath = $"{currentPath}/../../../..//ml-latest/MovieCodes_IMDB.txt";
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
@@ -744,7 +744,7 @@ public class DataProcessor
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/Homework_3rdSemester/ml-latest/ActorsDirectorsNames_IMDB.txt";
+            string filePath = $"{currentPath}/../../../..//ml-latest/ActorsDirectorsNames_IMDB.txt";
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
@@ -780,7 +780,7 @@ public class DataProcessor
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/Homework_3rdSemester/ml-latest/links_IMDB_MovieLens.txt";
+            string filePath = $"{currentPath}/../../../../ml-latest/links_IMDB_MovieLens.txt";
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
@@ -819,7 +819,7 @@ public class DataProcessor
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, double>();
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/Homework_3rdSemester/ml-latest/Ratings_IMDB.txt";
+            string filePath = $"{currentPath}/../../../..//ml-latest/Ratings_IMDB.txt";
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
@@ -859,7 +859,7 @@ public class DataProcessor
             var result = new ConcurrentDictionary<string, List<string>>();
             var validPeopleIds = new HashSet<string>(peopleNames.Keys);
             
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/Homework_3rdSemester/ml-latest/ActorsDirectorsCodes_IMDB.txt";
+            string filePath = $"{currentPath}/../../../..//ml-latest/ActorsDirectorsCodes_IMDB.txt";
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
@@ -918,7 +918,7 @@ public class DataProcessor
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/Homework_3rdSemester/ml-latest/TagCodes_MovieLens.txt";
+            string filePath = $"{currentPath}/../../../..//ml-latest/TagCodes_MovieLens.txt";
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
@@ -957,7 +957,7 @@ public class DataProcessor
         {
             var result = new ConcurrentDictionary<string, List<string>>();
             
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/Homework_3rdSemester/ml-latest/TagScores_MovieLens.txt";
+            string filePath = $"{currentPath}/../../../..//ml-latest/TagScores_MovieLens.txt";
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
@@ -1272,7 +1272,7 @@ class Program
     }
     
     static void ShowMenu()
-    {
+    {   
         Console.WriteLine("\n=== МЕНЮ ===");
         Console.WriteLine("1. Тестирование подключения к БД");
         Console.WriteLine("2. Создание базы данных");
