@@ -1,0 +1,40 @@
+nm0001,Christopher Nolan
+nm0002,Quentin Tarantino
+nm0003,Steven Spielberg
+nm0004,Martin Scorsese
+nm0005,James Cameron
+nm0006,Stanley Kubrick
+nm0007,Ridley Scott
+nm0008,David Fincher
+nm0009,Tim Burton
+nm0010,Frank Darabont
+nm0011,Robert Zemeckis
+nm0012,Clint Eastwood
+nm0013,Mel Gibson
+nm0014,Ron Howard
+nm0015,Peter Jackson
+nm0101,Leonardo DiCaprio
+nm0102,Brad Pitt
+nm0103,Tom Hanks
+nm0104,Johnny Depp
+nm0105,Will Smith
+nm0106,Morgan Freeman
+nm0107,Robert De Niro
+nm0108,Samuel L. Jackson
+nm0109,Matt Damon
+nm0110,Christian Bale
+nm0111,Mark Wahlberg
+nm0112,Ben Affleck
+nm0113,Robert Downey Jr.
+nm0114,Chris Evans
+nm0115,Scarlett Johansson
+nm0120,John Travolta
+nm0121,Uma Thurman
+nm0122,Samuel L. Jackson
+nm0123,Bruce Willis
+nm0124,Tim Roth
+nm0130,Robin Williams
+nm0131,Marlon Brando
+nm0132,Al Pacino
+nm0140,Arnold Schwarzenegger
+nm0141,Sylvester Stallone
