@@ -31,3 +31,6 @@ jobs:
 
       - name: Dotnet tool restore
         run: dotnet tool restore
+        
+      - name: Test
+        run: dotnet test

@@ -12,22 +12,22 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 // ============================================
-// МОДЕЛИ СУЩНОСТЕЙ
+// Классы
 // ============================================
 
 public class Movie
 {
     public int Id { get; set; }
     
-    public string Title { get; set; }
+    public string Title { get; set; } = "";
     
-    public string ImdbId { get; set; }
+    public string ImdbId { get; set; } = "";
     
     public double Rating { get; set; }
     
     // Режиссер (отношение один-ко-многим)
     public int? DirectorId { get; set; }
-    public virtual Person Director { get; set; }
+    public virtual Person Director { get; set; } = new Person();
     
     // Актеры (отношение многие-ко-многим)
     public virtual ICollection<Person> Actors { get; set; } = new List<Person>();
@@ -40,7 +40,8 @@ public class Movie
     
     public double CalculateSimilarity(Movie other)
     {
-        if (other == null || this == other) return 0;
+        if (other == null) return 0;
+        if (this == other) return 1;
 
         // Оценка по актерам и режиссеру
         double actorScore = 0;
@@ -94,7 +95,7 @@ public class Movie
 public class Person
 { 
     public int Id { get; set; } // Убрали DatabaseGeneratedOption.Identity
-    public string Name { get; set; }
+    public string Name { get; set; } = "";
     
     public virtual ICollection<Movie> MoviesAsDirector { get; set; } = new List<Movie>();
     public virtual ICollection<Movie> MoviesAsActor { get; set; } = new List<Movie>();
@@ -106,9 +107,9 @@ public class Tag
 {
     public int Id { get; set; }
     
-    public string Name { get; set; }
+    public string Name { get; set; } = "";
 
-    public string TagId { get; set; }
+    public string TagId { get; set; } = "";
     
     public virtual ICollection<Movie> Movies { get; set; } = new List<Movie>();
     
@@ -121,8 +122,8 @@ public class MovieSimilarity
     public int TargetMovieId { get; set; }
     public double Score { get; set; }
     
-    public virtual Movie SourceMovie { get; set; }
-    public virtual Movie TargetMovie { get; set; }
+    public virtual Movie SourceMovie { get; set; } = new Movie();
+    public virtual Movie TargetMovie { get; set; } = new Movie();
     
     public override string ToString()
     {
@@ -131,7 +132,7 @@ public class MovieSimilarity
 }
 
 // ============================================
-// КОНТЕКСТ БАЗЫ ДАННЫХ (УПРОЩЕННЫЙ)
+// БД
 // ============================================
 
 public class MovieContext : DbContext
@@ -142,7 +143,7 @@ public class MovieContext : DbContext
     public DbSet<MovieSimilarity> MovieSimilarities { get; set; }
     
     // Путь к файлу базы данных
-    private static string GetDatabasePath()
+    public static string GetDatabasePath()
     {
         var basePath = AppContext.BaseDirectory;
         var dbPath = Path.Combine(basePath, "movie.db");
@@ -241,7 +242,7 @@ public class MovieContext : DbContext
 }
 
 // ============================================
-// УТИЛИТЫ ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ
+// Работа с БД
 // ============================================
 
 public static class DatabaseHelper
@@ -396,22 +397,22 @@ public static class DatabaseHelper
 
 public class DataProcessor
 {
-    private static Dictionary<string, string> imdbToMovieLens;
-    private static Dictionary<string, string> movieTitles;
-    private static Dictionary<string, double> ratings;
-    private static Dictionary<string, string> peopleNames;
-    private static Dictionary<string, List<string>> moviePeople;
-    private static Dictionary<string, string> tagNames;
-    private static Dictionary<string, List<string>> movieTags;
-    private static int batchSize = 1000; // Уменьшили для тестирования
+    public static Dictionary<string, string> imdbToMovieLens = new Dictionary<string, string>();
+    public static Dictionary<string, string> movieTitles = new Dictionary<string, string>();
+    public static Dictionary<string, double> ratings = new Dictionary<string, double>();
+    public static Dictionary<string, string> peopleNames = new Dictionary<string, string>();
+    public static Dictionary<string, List<string>> moviePeople = new Dictionary<string, List<string>>();
+    public static Dictionary<string, string> tagNames = new Dictionary<string, string>();
+    public static Dictionary<string, List<string>> movieTags = new Dictionary<string, List<string>>();
+    public static int batchSize = 1000; // Уменьшили для тестирования
     
     // Временные структуры для парсинга
-    private class MovieData
+    public class MovieData
     {
-        public string ImdbId { get; set; }
-        public string Title { get; set; }
+        public string ImdbId { get; set; } = "";
+        public string Title { get; set; } = "";
         public double Rating { get; set; }
-        public string DirectorName { get; set; }
+        public string DirectorName { get; set; } = "";
         public List<string> ActorNames { get; set; } = new List<string>();
         public List<string> TagNames { get; set; } = new List<string>();
     }
@@ -465,7 +466,7 @@ public class DataProcessor
             }
         }
     }
-    private static async Task BuildAndSaveToDatabaseAsync()
+    public static async Task BuildAndSaveToDatabaseAsync()
     {
         Console.WriteLine("Начинаем сохранение в БД...");
         
@@ -473,9 +474,64 @@ public class DataProcessor
         
         try
         {
-            int processedFilms = 0;
+            Console.WriteLine("Сначала сохраняем всех людей в БД...");
             
-            Console.WriteLine("Обработка данных...");
+            var allPersonNames = new HashSet<string>();
+            
+            foreach (var people in moviePeople.Values)
+            {
+                foreach (var personInfo in people)
+                {
+                    var name = personInfo.Contains(':') ? personInfo.Split(':')[1] : personInfo;
+                    allPersonNames.Add(name);
+                }
+            }
+            
+            int peopleSaved = 0;
+            foreach (var personName in allPersonNames.Distinct())
+            {
+                var existingPerson = await context.People.FirstOrDefaultAsync(p => p.Name == personName);
+                if (existingPerson == null)
+                {
+                    context.People.Add(new Person { Name = personName });
+                    peopleSaved++;
+                    
+                    if (peopleSaved % 100 == 0)
+                    {
+                        await context.SaveChangesAsync();
+                        Console.WriteLine($"Сохранено {peopleSaved} людей...");
+                    }
+                }
+            }
+            await context.SaveChangesAsync();
+            Console.WriteLine($"✅ Сохранено людей: {peopleSaved}");
+            
+            Console.WriteLine("Сохраняем теги в БД...");
+            var allTagNames = new HashSet<string>();
+            foreach (var tags in movieTags.Values)
+            {
+                foreach (var tag in tags)
+                {
+                    allTagNames.Add(tag);
+                }
+            }
+            
+            int tagsSaved = 0;
+            foreach (var tagName in allTagNames.Distinct())
+            {
+                var existingTag = await context.Tags.FirstOrDefaultAsync(t => t.Name == tagName);
+                if (existingTag == null)
+                {
+                    var tagId = tagNames.FirstOrDefault(kvp => kvp.Value == tagName).Key ?? "0";
+                    context.Tags.Add(new Tag { Name = tagName, TagId = tagId });
+                    tagsSaved++;
+                }
+            }
+            await context.SaveChangesAsync();
+            Console.WriteLine($"✅ Сохранено тегов: {tagsSaved}");
+            
+            Console.WriteLine("Теперь сохраняем фильмы...");
+            int processedFilms = 0;
             
             foreach (var movieTitle in movieTitles)
             {
@@ -487,12 +543,7 @@ public class DataProcessor
                     if (!ratings.ContainsKey(imdbId))
                         ratings[imdbId] = 0.0;
                     
-                    var movie = new Movie
-                    {
-                        ImdbId = imdbId,
-                        Title = title,
-                        Rating = ratings[imdbId]
-                    };
+                    int? directorId = null;
                     
                     if (moviePeople.TryGetValue(imdbId, out var peopleList))
                     {
@@ -500,20 +551,21 @@ public class DataProcessor
                         if (directorInfo != null)
                         {
                             var directorName = directorInfo.Substring(9);
-                            
-                            var director = await context.People
-                                .FirstOrDefaultAsync(p => p.Name == directorName);
-                            
-                            if (director == null)
+                            var director = await context.People.FirstOrDefaultAsync(p => p.Name == directorName);
+                            if (director != null)
                             {
-                                director = new Person { Name = directorName };
-                                context.People.Add(director);
-                                await context.SaveChangesAsync();
+                                directorId = director.Id;
                             }
-                            
-                            movie.DirectorId = director.Id;
                         }
                     }
+                    
+                    var movie = new Movie
+                    {
+                        ImdbId = imdbId,
+                        Title = title,
+                        Rating = ratings[imdbId],
+                        DirectorId = directorId
+                    };
                     
                     context.Movies.Add(movie);
                     await context.SaveChangesAsync();
@@ -528,41 +580,23 @@ public class DataProcessor
                         
                         foreach (var actorName in actors)
                         {
-                            var actor = await context.People
-                                .FirstOrDefaultAsync(p => p.Name == actorName);
-                            
-                            if (actor == null)
+                            var actor = await context.People.FirstOrDefaultAsync(p => p.Name == actorName);
+                            if (actor != null)
                             {
-                                actor = new Person { Name = actorName };
-                                context.People.Add(actor);
-                                await context.SaveChangesAsync();
+                                await context.Database.ExecuteSqlRawAsync(
+                                    "INSERT INTO MovieActor (MovieId, PersonId) VALUES ({0}, {1})",
+                                    movie.Id, actor.Id);
                             }
-                            
-                            await context.Database.ExecuteSqlRawAsync(
-                                "INSERT INTO MovieActor (MovieId, PersonId) VALUES ({0}, {1})",
-                                movie.Id, actor.Id);
                         }
-
-                        if (movieTags.TryGetValue(imdbId, out var tagsList))
+                    }
+                    
+                    if (movieTags.TryGetValue(imdbId, out var tagsList))
+                    {
+                        foreach (var tagName in tagsList.Distinct())
                         {
-                            foreach (var tagName in tagsList.Distinct())
+                            var tag = await context.Tags.FirstOrDefaultAsync(t => t.Name == tagName);
+                            if (tag != null)
                             {
-                                var tagid = tagNames.FirstOrDefault(kvp => kvp.Value == tagName).Key;
-                                if (tagid == null)
-                                {
-                                    tagid = "0";
-                                }
-                                
-                                var tag = await context.Tags
-                                    .FirstOrDefaultAsync(t => t.Name == tagName);
-                                
-                                if (tag == null)
-                                {
-                                    tag = new Tag { Name = tagName, TagId = tagid };
-                                    context.Tags.Add(tag);
-                                    await context.SaveChangesAsync();
-                                }
-                                
                                 await context.Database.ExecuteSqlRawAsync(
                                     "INSERT INTO MovieTag (MovieId, TagId) VALUES ({0}, {1})",
                                     movie.Id, tag.Id);
@@ -593,7 +627,7 @@ public class DataProcessor
         }
     }
     
-    private static async Task BuildSimilaritiesAsync()
+    public static async Task BuildSimilaritiesAsync()
     {
         Console.WriteLine("Построение рекомендаций...");
         
@@ -662,19 +696,18 @@ public class DataProcessor
     // ============================================
     // МЕТОДЫ ПАРСИНГА ФАЙЛОВ (упрощенные)
     // ============================================
-    
-    private static Task<Dictionary<string, string>> LoadMovieTitlesAsync()
+    public static Task<Dictionary<string, string>> LoadMovieTitlesAsync()
     {
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/TaskProj/ml-latest/MovieCodes_IMDB.tsv";
+            string filePath = Path.GetFullPath("../../../../ml-latest/MovieCodes_IMDB.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             int processed = 0;
             
@@ -686,11 +719,11 @@ public class DataProcessor
                     continue;
                 }
                 
-                var parts = line.Split('\t');
-                if (parts.Length >= 4 && (parts[3] == "US" || parts[3] == "RU" || parts[4] == "en" || parts[4] == "ru"))
+                var parts = line.Split(',');
+                if (parts.Length >= 4 && (parts[2] == "US" || parts[2] == "RU" || parts[3] == "en" || parts[3] == "ru"))
                 {
                     var imdbId = parts[0];
-                    var title = parts[2];
+                    var title = parts[1];
                     result.TryAdd(imdbId, title);
                 }
                 
@@ -705,18 +738,18 @@ public class DataProcessor
         });
     }
     
-    private static Task<Dictionary<string, string>> LoadPeopleNamesAsync()
+    public static Task<Dictionary<string, string>> LoadPeopleNamesAsync()
     {
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/TaskProj/ml-latest/ActorsDirectorsNames_IMDB.txt";
+            string filePath = Path.GetFullPath("../../../../ml-latest/ActorsDirectorsNames_IMDB.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             
             while ((line = reader.ReadLine()) != null)
@@ -727,7 +760,7 @@ public class DataProcessor
                     continue;
                 }
                 
-                var parts = line.Split('\t');
+                var parts = line.Split(',');
                 if (parts.Length >= 2)
                 {
                     var personId = parts[0];
@@ -741,18 +774,18 @@ public class DataProcessor
         });
     }
     
-    private static Task<Dictionary<string, string>> LoadImdbMovieLensLinksAsync(Dictionary<string, string> trueMovie)
+    public static Task<Dictionary<string, string>> LoadImdbMovieLensLinksAsync(Dictionary<string, string> trueMovie)
     {
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/TaskProj/ml-latest/links_IMDB_MovieLens.csv";
+            string filePath = Path.GetFullPath("../../../../ml-latest/links_IMDB_MovieLens.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             
             while ((line = reader.ReadLine()) != null)
@@ -780,18 +813,18 @@ public class DataProcessor
         });
     }
     
-    private static Task<Dictionary<string, double>> LoadRatingsAsync(Dictionary<string, string> trueMovie)
+    public static Task<Dictionary<string, double>> LoadRatingsAsync(Dictionary<string, string> trueMovie)
     {
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, double>();
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/TaskProj/ml-latest/Ratings_IMDB.tsv";
+            string filePath = Path.GetFullPath("../../../../ml-latest/Ratings_IMDB.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             
             while ((line = reader.ReadLine()) != null)
@@ -802,7 +835,7 @@ public class DataProcessor
                     continue;
                 }
                 
-                var parts = line.Split('\t');
+                var parts = line.Split(',');
                 if (parts.Length >= 2 && double.TryParse(parts[1], out double rating))
                 {
                     var imdbId = parts[0];
@@ -818,20 +851,20 @@ public class DataProcessor
         });
     }
     
-    private static Task<Dictionary<string, List<string>>> LoadMoviePeopleAsync(Dictionary<string, string> trueMovie, Dictionary<string, string> peopleNames)
+    public static Task<Dictionary<string, List<string>>> LoadMoviePeopleAsync(Dictionary<string, string> trueMovie, Dictionary<string, string> peopleNames)
     {
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, List<string>>();
             var validPeopleIds = new HashSet<string>(peopleNames.Keys);
             
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/TaskProj/ml-latest/ActorsDirectorsCodes_IMDB.tsv";
+            string filePath = Path.GetFullPath("../../../../ml-latest/ActorsDirectorsCodes_IMDB.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             int processed = 0;
             
@@ -843,15 +876,15 @@ public class DataProcessor
                     continue;
                 }
                 
-                var parts = line.Split('\t');
+                var parts = line.Split(',');
                 if (parts.Length >= 3)
                 {
-                    var personId = parts[2];
+                    var personId = parts[1];
                     
                     if (validPeopleIds.Contains(personId))
                     {
                         var imdbId = parts[0];
-                        var category = parts[3];
+                        var category = parts[2];
                         var personName = peopleNames[personId];
                         var personInfo = $"{category}:{personName}";
                         
@@ -879,18 +912,18 @@ public class DataProcessor
         });
     }
     
-    private static Task<Dictionary<string, string>> LoadTagNamesAsync()
+    public static Task<Dictionary<string, string>> LoadTagNamesAsync()
     {
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/TaskProj/ml-latest/TagCodes_MovieLens.csv";
+            string filePath = Path.GetFullPath("../../../../ml-latest/TagCodes_MovieLens.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             
             while ((line = reader.ReadLine()) != null)
@@ -915,7 +948,7 @@ public class DataProcessor
         });
     }
     
-    private static Task<Dictionary<string, List<string>>> LoadMovieTagsAsync(
+    public static Task<Dictionary<string, List<string>>> LoadMovieTagsAsync(
         Dictionary<string, string> imdbToMovieLens,
         Dictionary<string, string> tagNames)
     {
@@ -923,13 +956,13 @@ public class DataProcessor
         {
             var result = new ConcurrentDictionary<string, List<string>>();
             
-            string filePath = "/media/hdd/gregory/CSharp/Tasks/TaskProj/ml-latest/TagScores_MovieLens.csv";
+            string filePath = Path.GetFullPath("../../../../ml-latest/TagScores_MovieLens.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             
             while ((line = reader.ReadLine()) != null)
@@ -1238,7 +1271,7 @@ class Program
     }
     
     static void ShowMenu()
-    {
+    {   
         Console.WriteLine("\n=== МЕНЮ ===");
         Console.WriteLine("1. Тестирование подключения к БД");
         Console.WriteLine("2. Создание базы данных");
