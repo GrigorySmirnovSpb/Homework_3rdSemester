@@ -19,15 +19,15 @@ public class Movie
 {
     public int Id { get; set; }
     
-    public string Title { get; set; }
+    public string Title { get; set; } = "";
     
-    public string ImdbId { get; set; }
+    public string ImdbId { get; set; } = "";
     
     public double Rating { get; set; }
     
     // Режиссер (отношение один-ко-многим)
     public int? DirectorId { get; set; }
-    public virtual Person Director { get; set; }
+    public virtual Person Director { get; set; } = new Person();
     
     // Актеры (отношение многие-ко-многим)
     public virtual ICollection<Person> Actors { get; set; } = new List<Person>();
@@ -95,7 +95,7 @@ public class Movie
 public class Person
 { 
     public int Id { get; set; } // Убрали DatabaseGeneratedOption.Identity
-    public string Name { get; set; }
+    public string Name { get; set; } = "";
     
     public virtual ICollection<Movie> MoviesAsDirector { get; set; } = new List<Movie>();
     public virtual ICollection<Movie> MoviesAsActor { get; set; } = new List<Movie>();
@@ -107,9 +107,9 @@ public class Tag
 {
     public int Id { get; set; }
     
-    public string Name { get; set; }
+    public string Name { get; set; } = "";
 
-    public string TagId { get; set; }
+    public string TagId { get; set; } = "";
     
     public virtual ICollection<Movie> Movies { get; set; } = new List<Movie>();
     
@@ -122,8 +122,8 @@ public class MovieSimilarity
     public int TargetMovieId { get; set; }
     public double Score { get; set; }
     
-    public virtual Movie SourceMovie { get; set; }
-    public virtual Movie TargetMovie { get; set; }
+    public virtual Movie SourceMovie { get; set; } = new Movie();
+    public virtual Movie TargetMovie { get; set; } = new Movie();
     
     public override string ToString()
     {
@@ -397,23 +397,22 @@ public static class DatabaseHelper
 
 public class DataProcessor
 {
-    public static Dictionary<string, string> imdbToMovieLens;
-    public static Dictionary<string, string> movieTitles;
-    public static Dictionary<string, double> ratings;
-    public static Dictionary<string, string> peopleNames;
-    public static Dictionary<string, List<string>> moviePeople;
-    public static Dictionary<string, string> tagNames;
-    public static Dictionary<string, List<string>> movieTags;
+    public static Dictionary<string, string> imdbToMovieLens = new Dictionary<string, string>();
+    public static Dictionary<string, string> movieTitles = new Dictionary<string, string>();
+    public static Dictionary<string, double> ratings = new Dictionary<string, double>();
+    public static Dictionary<string, string> peopleNames = new Dictionary<string, string>();
+    public static Dictionary<string, List<string>> moviePeople = new Dictionary<string, List<string>>();
+    public static Dictionary<string, string> tagNames = new Dictionary<string, string>();
+    public static Dictionary<string, List<string>> movieTags = new Dictionary<string, List<string>>();
     public static int batchSize = 1000; // Уменьшили для тестирования
-    public static string currentPath = Directory.GetCurrentDirectory();
     
     // Временные структуры для парсинга
     public class MovieData
     {
-        public string ImdbId { get; set; }
-        public string Title { get; set; }
+        public string ImdbId { get; set; } = "";
+        public string Title { get; set; } = "";
         public double Rating { get; set; }
-        public string DirectorName { get; set; }
+        public string DirectorName { get; set; } = "";
         public List<string> ActorNames { get; set; } = new List<string>();
         public List<string> TagNames { get; set; } = new List<string>();
     }
@@ -702,13 +701,13 @@ public class DataProcessor
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = $"{currentPath}/../../../..//ml-latest/MovieCodes_IMDB.txt";
+            string filePath = Path.GetFullPath("../../../../ml-latest/MovieCodes_IMDB.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             int processed = 0;
             
@@ -744,13 +743,13 @@ public class DataProcessor
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = $"{currentPath}/../../../..//ml-latest/ActorsDirectorsNames_IMDB.txt";
+            string filePath = Path.GetFullPath("../../../../ml-latest/ActorsDirectorsNames_IMDB.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             
             while ((line = reader.ReadLine()) != null)
@@ -780,13 +779,13 @@ public class DataProcessor
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = $"{currentPath}/../../../../ml-latest/links_IMDB_MovieLens.txt";
+            string filePath = Path.GetFullPath("../../../../ml-latest/links_IMDB_MovieLens.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             
             while ((line = reader.ReadLine()) != null)
@@ -819,13 +818,13 @@ public class DataProcessor
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, double>();
-            string filePath = $"{currentPath}/../../../..//ml-latest/Ratings_IMDB.txt";
+            string filePath = Path.GetFullPath("../../../../ml-latest/Ratings_IMDB.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             
             while ((line = reader.ReadLine()) != null)
@@ -859,13 +858,13 @@ public class DataProcessor
             var result = new ConcurrentDictionary<string, List<string>>();
             var validPeopleIds = new HashSet<string>(peopleNames.Keys);
             
-            string filePath = $"{currentPath}/../../../..//ml-latest/ActorsDirectorsCodes_IMDB.txt";
+            string filePath = Path.GetFullPath("../../../../ml-latest/ActorsDirectorsCodes_IMDB.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             int processed = 0;
             
@@ -918,13 +917,13 @@ public class DataProcessor
         return Task.Run(() =>
         {
             var result = new ConcurrentDictionary<string, string>();
-            string filePath = $"{currentPath}/../../../..//ml-latest/TagCodes_MovieLens.txt";
+            string filePath = Path.GetFullPath("../../../../ml-latest/TagCodes_MovieLens.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             
             while ((line = reader.ReadLine()) != null)
@@ -957,13 +956,13 @@ public class DataProcessor
         {
             var result = new ConcurrentDictionary<string, List<string>>();
             
-            string filePath = $"{currentPath}/../../../..//ml-latest/TagScores_MovieLens.txt";
+            string filePath = Path.GetFullPath("../../../../ml-latest/TagScores_MovieLens.txt");
             
             if (!File.Exists(filePath))
                 throw new FileNotFoundException($"Файл {filePath} не найден");
             
             using var reader = new StreamReader(filePath);
-            string line;
+            string? line;
             bool isFirstLine = true;
             
             while ((line = reader.ReadLine()) != null)

@@ -40,7 +40,7 @@ public class MovieTests
 
         double similarity = movie1.CalculateSimilarity(movie2);
 
-        Assert.IsTrue(similarity > 0);
+        Assert.IsGreaterThan(0, similarity);
         Assert.AreEqual(0.5, similarity);
     }
 
@@ -104,7 +104,7 @@ public class MovieTests
 
         double similarity = movie1.CalculateSimilarity(movie2);
 
-        Assert.IsTrue(similarity >= 0.25);
+        Assert.IsGreaterThanOrEqualTo(0.25, similarity);
     }
 
     [TestMethod]
@@ -128,7 +128,7 @@ public class MovieTests
 
         double similarity = movie1.CalculateSimilarity(movie2);
 
-        Assert.IsTrue(similarity >= 0.25);
+        Assert.IsGreaterThanOrEqualTo(0.25, similarity);
     }
 
     [TestMethod]
@@ -156,7 +156,7 @@ public class MovieTests
 
         double similarity = movie1.CalculateSimilarity(movie2);
 
-        Assert.IsTrue(similarity >= 0.25);
+        Assert.IsGreaterThanOrEqualTo(0.25, similarity);
     }
 
     [TestMethod]
@@ -165,7 +165,7 @@ public class MovieTests
         var result = await DataProcessor.LoadMovieTitlesAsync();
 
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.Count > 0);
+        Assert.IsNotEmpty(result);
     }
 
     [TestMethod]
@@ -174,7 +174,7 @@ public class MovieTests
         var result = await DataProcessor.LoadPeopleNamesAsync();
 
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.Count > 0);
+        Assert.IsNotEmpty(result);
     }
     public async Task LoadLinksAsync_ReturnsNonEmptyDictionary()
     {
@@ -182,7 +182,7 @@ public class MovieTests
         var result = await DataProcessor.LoadImdbMovieLensLinksAsync(dictionary);
 
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.Count > 0);
+        Assert.IsNotEmpty(result);
     }
     public async Task LoadRatingAsync_ReturnsNonEmptyDictionary()
     {
@@ -190,7 +190,7 @@ public class MovieTests
         var result = await DataProcessor.LoadRatingsAsync(dictionary);
 
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.Count > 0);
+        Assert.IsNotEmpty(result);
     }
 
     [TestMethod]
@@ -201,14 +201,14 @@ public class MovieTests
         var result = await DataProcessor.LoadMoviePeopleAsync(movies,people);
 
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.Count > 0);
+        Assert.IsNotEmpty(result);
     }
     public async Task LoadTagsAsync_ReturnsNonEmptyDictionary()
     {
         var result = await DataProcessor.LoadTagNamesAsync();
 
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.Count > 0);
+        Assert.IsNotEmpty(result);
     }
     public async Task LoadMovieTagsAsync_ReturnsNonEmptyDictionary()
     {   
@@ -218,6 +218,6 @@ public class MovieTests
         var result = await DataProcessor.LoadMovieTagsAsync(accordance_movies, tags);
 
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.Count > 0);
+        Assert.IsNotEmpty(result);
     }
 }
